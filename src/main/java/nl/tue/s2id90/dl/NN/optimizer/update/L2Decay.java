@@ -23,7 +23,9 @@ public class L2Decay implements UpdateFunction{
     
     @Override
     public void update(INDArray array, boolean isBias, double learningRate, int batchSize, INDArray gradient){
-        array = array.add(((array.mul(array)).mul(decay)).div(2));
+        if (!isBias) {
+            array.subi((array.mul(decay)));
+        }
         f.update(array, isBias, learningRate, batchSize, gradient);
     }
 }

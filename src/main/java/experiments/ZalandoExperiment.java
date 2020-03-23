@@ -85,11 +85,9 @@ public class ZalandoExperiment extends GUIExperiment {
     }
     
     Model createModel(int inputs, int outputs, InputReader reader) {
-//    int fcNeurons = 100;
 
     Model model = new Model(new InputLayer("In", reader.getInputShape(), true));
     model.addLayer(new Flatten("Flatten", reader.getInputShape()));
-//    model.addLayer(new FullyConnected("fc1", new TensorShape(inputs), fcNeurons, new RELU()));
     model.addLayer(new OutputSoftmax("Out", new TensorShape(inputs), outputs, new CrossEntropy()));
     return model;
     }

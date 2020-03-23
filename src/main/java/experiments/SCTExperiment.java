@@ -18,6 +18,8 @@ import nl.tue.s2id90.dl.NN.layer.PoolMax2D;
 import nl.tue.s2id90.dl.NN.loss.CrossEntropy;
 import nl.tue.s2id90.dl.NN.optimizer.Optimizer;
 import nl.tue.s2id90.dl.NN.optimizer.SGD;
+import nl.tue.s2id90.dl.NN.optimizer.update.GradientDescentWithMomentum;
+import nl.tue.s2id90.dl.NN.optimizer.update.L2Decay;
 import nl.tue.s2id90.dl.NN.tensor.TensorShape;
 import nl.tue.s2id90.dl.NN.validate.Classification;
 import nl.tue.s2id90.dl.experiment.GUIExperiment;
@@ -33,8 +35,8 @@ import nl.tue.s2id90.dl.javafx.ShowCase;
 public class SCTExperiment extends GUIExperiment {
         // ( hyper ) parameters
     int batchSize = 32;
-    int epochs = 5;
-    double learningRate = 0.01;
+    int epochs = 6;
+    double learningRate = 0.1;
     String[] labels= {
     "Square","Circle","Triangle"
     };
@@ -49,20 +51,18 @@ public class SCTExperiment extends GUIExperiment {
         FXGUI.getSingleton().addTab("show case", showCase.getNode());
         showCase.setItems(reader.getValidationData(100));
         
-        int inputs = reader.getInputShape().getNeuronCount();
-        int outputs = reader.getOutputShape().getNeuronCount();
-        
 //        MeanSubtraction meanTransform = new MeanSubtraction();
 //        meanTransform.fit(reader.getTrainingData());
 //        meanTransform.transform(reader.getTrainingData());
 //        meanTransform.transform(reader.getValidationData());
 
-        Model model = createModel(inputs, outputs, reader);
+        Model model = createModel(reader);
         model.initialize(new Gaussian());
     
         Optimizer sgd = SGD.builder()
                 .model(model)
                 .validator(new Classification())
+                .updateFunction(() -> new L2Decay(GradientDescentWithMomentum::new, 0.0001f))
 //                .updateFunction(GradientDescentWithMomentum::new)
                 .learningRate(learningRate)
                 .build();
@@ -70,18 +70,26 @@ public class SCTExperiment extends GUIExperiment {
         trainModel(sgd, reader, epochs, 0);
     }
     
-    Model createModel(int inputs, int outputs, InputReader reader) {
-//    int fcNeurons = 100;
+    Model createModel(InputReader reader) {
+    int fcNeurons = 200;
 
-//    Model model = new Model(new InputLayer("In", reader.getInputShape(), true));
-//    model.addLayer(new Convolution2D("cv1", reader.getInputShape(), 3, 16, new RELU()));
-//    model.addLayer(new PoolMax2D("pm2", model.getLayers().get(1).getOutputShape(), 2));
-//    model.addLayer(new Flatten("Flatten", model.getLayers().get(2).getOutputShape()));
-//    model.addLayer(new FullyConnected("fc1", model.getLayers().get(3).getOutputShape(), fcNeurons, new RELU()));
-//    model.addLayer(new OutputSoftmax("Out", new TensorShape(fcNeurons), outputs, new CrossEntropy()));
     Model model = new Model(new InputLayer("In", reader.getInputShape(), true));
-    model.addLayer(new Flatten("Flatten", reader.getInputShape()));
-    model.addLayer(new OutputSoftmax("Out", new TensorShape(reader.getInputShape().getNeuronCount()), outputs, new CrossEntropy()));
+    model.addLayer(new Convolution2D("cv1", reader.getInputShape(), 3, 16, new RELU()));
+    model.addLayer(new PoolMax2D("pm1", model.getLayers().get(1).getOutputShape(), 2));
+    model.addLayer(new Convolution2D("cv2", model.getLayers().get(2).getOutputShape(), 3, 16, new RELU()));
+    model.addLayer(new PoolMax2D("pm2", model.getLayers().get(3).getOutputShape(), 2));
+    model.addLayer(new Flatten("Flatten", model.getLayers().get(4).getOutputShape()));
+    model.addLayer(new FullyConnected("fc1", model.getLayers().get(5).getOutputShape(), fcNeurons, new RELU()));
+    model.addLayer(new OutputSoftmax("Out",
+                                    new TensorShape(fcNeurons),
+                                    reader.getOutputShape().getNeuronCount(),
+                                    new CrossEntropy()));
+//    Model model = new Model(new InputLayer("In", reader.getInputShape(), true));
+//    model.addLayer(new Flatten("Flatten", reader.getInputShape()));
+//    model.addLayer(new OutputSoftmax("Out",
+//                                    new TensorShape(reader.getInputShape().getNeuronCount()),
+//                                    reader.getOutputShape().getNeuronCount(),
+//                                    new CrossEntropy()));
 
     return model;
     }

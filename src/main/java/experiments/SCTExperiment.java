@@ -9,22 +9,18 @@ import java.io.IOException;
 import nl.tue.s2id90.dl.NN.Model;
 import nl.tue.s2id90.dl.NN.activation.RELU;
 import nl.tue.s2id90.dl.NN.initializer.Gaussian;
+import nl.tue.s2id90.dl.NN.layer.Convolution2D;
 import nl.tue.s2id90.dl.NN.layer.Flatten;
 import nl.tue.s2id90.dl.NN.layer.FullyConnected;
 import nl.tue.s2id90.dl.NN.layer.InputLayer;
 import nl.tue.s2id90.dl.NN.layer.OutputSoftmax;
-import nl.tue.s2id90.dl.NN.layer.SimpleOutput;
+import nl.tue.s2id90.dl.NN.layer.PoolMax2D;
 import nl.tue.s2id90.dl.NN.loss.CrossEntropy;
-import nl.tue.s2id90.dl.NN.loss.MSE;
 import nl.tue.s2id90.dl.NN.optimizer.Optimizer;
 import nl.tue.s2id90.dl.NN.optimizer.SGD;
-import nl.tue.s2id90.dl.NN.optimizer.update.GradientDescentWithMomentum;
 import nl.tue.s2id90.dl.NN.tensor.TensorShape;
-import nl.tue.s2id90.dl.NN.transform.MeanSubtraction;
 import nl.tue.s2id90.dl.NN.validate.Classification;
-import nl.tue.s2id90.dl.NN.validate.Regression;
 import nl.tue.s2id90.dl.experiment.GUIExperiment;
-import nl.tue.s2id90.dl.input.GenerateFunctionData;
 import nl.tue.s2id90.dl.input.InputReader;
 import nl.tue.s2id90.dl.input.MNISTReader;
 import nl.tue.s2id90.dl.javafx.FXGUI;
@@ -34,23 +30,21 @@ import nl.tue.s2id90.dl.javafx.ShowCase;
  *
  * @author Petar Petrov, 1227549
  */
-public class ZalandoExperiment extends GUIExperiment {
-    // ( hyper ) parameters
-    int batchSize = 8;
+public class SCTExperiment extends GUIExperiment {
+        // ( hyper ) parameters
+    int batchSize = 32;
     int epochs = 5;
     double learningRate = 0.01;
     String[] labels= {
-    "T-shirt/top","Trouser","Pullover","Dress","Coat",
-    "Sandal","Shirt","Sneaker","Bag","Ankle boot"
+    "Square","Circle","Triangle"
     };
     ShowCase showCase = new ShowCase(i -> labels[i]);
     
     public void go() throws IOException {
         // you are going to add code here
         // read input and pr int some informat ion on the data
-        InputReader reader = MNISTReader.fashion(batchSize);
+        InputReader reader = MNISTReader.primitives(batchSize);
         System.out.println(" Reader info :\n" + reader.toString());
-        //reader.getValidationData(1).forEach(System.out::println);
         
         FXGUI.getSingleton().addTab("show case", showCase.getNode());
         showCase.setItems(reader.getValidationData(100));
@@ -64,9 +58,8 @@ public class ZalandoExperiment extends GUIExperiment {
 //        meanTransform.transform(reader.getValidationData());
 
         Model model = createModel(inputs, outputs, reader);
-//        System.out.println(model);
         model.initialize(new Gaussian());
-//        
+    
         Optimizer sgd = SGD.builder()
                 .model(model)
                 .validator(new Classification())
@@ -77,24 +70,23 @@ public class ZalandoExperiment extends GUIExperiment {
         trainModel(sgd, reader, epochs, 0);
     }
     
-    @Override
-    public void onEpochFinished(Optimizer sgd, int epoch) {
-        super.onEpochFinished(sgd, epoch);
-        showCase.update(sgd.getModel());
-//        GradientDescentWithMomentum.mu += 0.1;
-    }
-    
     Model createModel(int inputs, int outputs, InputReader reader) {
 //    int fcNeurons = 100;
 
+//    Model model = new Model(new InputLayer("In", reader.getInputShape(), true));
+//    model.addLayer(new Convolution2D("cv1", reader.getInputShape(), 3, 16, new RELU()));
+//    model.addLayer(new PoolMax2D("pm2", model.getLayers().get(1).getOutputShape(), 2));
+//    model.addLayer(new Flatten("Flatten", model.getLayers().get(2).getOutputShape()));
+//    model.addLayer(new FullyConnected("fc1", model.getLayers().get(3).getOutputShape(), fcNeurons, new RELU()));
+//    model.addLayer(new OutputSoftmax("Out", new TensorShape(fcNeurons), outputs, new CrossEntropy()));
     Model model = new Model(new InputLayer("In", reader.getInputShape(), true));
     model.addLayer(new Flatten("Flatten", reader.getInputShape()));
-//    model.addLayer(new FullyConnected("fc1", new TensorShape(inputs), fcNeurons, new RELU()));
-    model.addLayer(new OutputSoftmax("Out", new TensorShape(inputs), outputs, new CrossEntropy()));
+    model.addLayer(new OutputSoftmax("Out", new TensorShape(reader.getInputShape().getNeuronCount()), outputs, new CrossEntropy()));
+
     return model;
     }
 
     public static void main(String[] args) throws IOException {
-        new ZalandoExperiment().go();
+        new SCTExperiment().go();
     }
 }

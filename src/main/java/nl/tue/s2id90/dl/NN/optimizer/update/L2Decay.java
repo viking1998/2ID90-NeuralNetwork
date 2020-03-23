@@ -10,11 +10,12 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 
 /**
  *
- * @author 20175140
+ * @author Emu 1281666
  */
 public class L2Decay implements UpdateFunction{
     double decay;
     UpdateFunction f;
+    
     public L2Decay(Supplier<UpdateFunction> supplier, double decay){
         this.decay = decay;
         this.f = supplier.get();
@@ -22,7 +23,7 @@ public class L2Decay implements UpdateFunction{
     
     @Override
     public void update(INDArray array, boolean isBias, double learningRate, int batchSize, INDArray gradient){
-        INDArray updateArr = array.mul(decay);
-        array = array.sub(updateArr);
+        array = array.add(((array.mul(array)).mul(decay)).div(2));
+        f.update(array, isBias, learningRate, batchSize, gradient);
     }
 }

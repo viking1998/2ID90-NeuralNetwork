@@ -36,9 +36,9 @@ import nl.tue.s2id90.dl.javafx.ShowCase;
  */
 public class ZalandoExperiment extends GUIExperiment {
     // ( hyper ) parameters
-    int batchSize = 8;
+    int batchSize = 15;
     int epochs = 5;
-    double learningRate = 0.01;
+    double learningRate = 0.05;
     String[] labels= {
     "T-shirt/top","Trouser","Pullover","Dress","Coat",
     "Sandal","Shirt","Sneaker","Bag","Ankle boot"
@@ -50,7 +50,6 @@ public class ZalandoExperiment extends GUIExperiment {
         // read input and pr int some informat ion on the data
         InputReader reader = MNISTReader.fashion(batchSize);
         System.out.println(" Reader info :\n" + reader.toString());
-        //reader.getValidationData(1).forEach(System.out::println);
         
         FXGUI.getSingleton().addTab("show case", showCase.getNode());
         showCase.setItems(reader.getValidationData(100));
@@ -58,19 +57,18 @@ public class ZalandoExperiment extends GUIExperiment {
         int inputs = reader.getInputShape().getNeuronCount();
         int outputs = reader.getOutputShape().getNeuronCount();
         
-//        MeanSubtraction meanTransform = new MeanSubtraction();
-//        meanTransform.fit(reader.getTrainingData());
-//        meanTransform.transform(reader.getTrainingData());
-//        meanTransform.transform(reader.getValidationData());
+        MeanSubtraction meanTransform = new MeanSubtraction();
+        meanTransform.fit(reader.getTrainingData());
+        meanTransform.transform(reader.getTrainingData());
+        meanTransform.transform(reader.getValidationData());
 
         Model model = createModel(inputs, outputs, reader);
-//        System.out.println(model);
         model.initialize(new Gaussian());
-//        
+
         Optimizer sgd = SGD.builder()
                 .model(model)
                 .validator(new Classification())
-//                .updateFunction(GradientDescentWithMomentum::new)
+                .updateFunction(GradientDescentWithMomentum::new)
                 .learningRate(learningRate)
                 .build();
         
@@ -81,7 +79,6 @@ public class ZalandoExperiment extends GUIExperiment {
     public void onEpochFinished(Optimizer sgd, int epoch) {
         super.onEpochFinished(sgd, epoch);
         showCase.update(sgd.getModel());
-//        GradientDescentWithMomentum.mu += 0.1;
     }
     
     Model createModel(int inputs, int outputs, InputReader reader) {

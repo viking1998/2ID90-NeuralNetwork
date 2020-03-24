@@ -24,13 +24,13 @@ public class AdaDelta implements UpdateFunction{
             arr = array.mul(0);
             delta = arr.dup();
         }
-        arr = (arr.mul(ro)).add(gradient.mul(gradient).mul(1+ro));
+        arr = (arr.mul(ro)).add(gradient.mul(gradient).mul(1 - ro));
         
         INDArray change = gradient.
-                mul(sqrt(((delta.mul(delta)).add(epsilon)).
-                        div((gradient.mul(gradient)).add(epsilon))));
+                mul(sqrt((delta.add(epsilon)).
+                        div(arr.add(epsilon))));
         
-        delta = (delta.mul(ro)).add(change.mul(change).mul(1 + ro));
+        delta = (delta.mul(ro)).add(change.mul(change).mul(1 - ro));
         
         array.subi(change);
     }

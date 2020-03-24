@@ -29,7 +29,7 @@ import nl.tue.s2id90.dl.input.InputReader;
 public class FunctionExperiment extends GUIExperiment {
     // ( hyper ) parameters
     double learningRate = 0.1;
-    int batchSize = 20;
+    int batchSize = 24;
     int epochs = 100;
     
     public void go() throws IOException {
@@ -37,7 +37,6 @@ public class FunctionExperiment extends GUIExperiment {
         // read input and pr int some informat ion on the data
         InputReader reader = GenerateFunctionData.THREE_VALUED_FUNCTION(batchSize);
         System.out.println(" Reader info :\n" + reader.toString());
-        //System.out.println(reader.getTrainingBatchCount());
         //reader.getValidationData(10).forEach(System.out::println);
         
         int inputs = reader.getInputShape().getNeuronCount();
@@ -57,11 +56,12 @@ public class FunctionExperiment extends GUIExperiment {
     }
     
     Model createModel(int inputs, int outputs) {
-        int fcNeurons = 27;
+        int fcNeurons = 24;
         Model model = new Model(new InputLayer("In", new TensorShape(inputs), true));
         model.addLayer(new FullyConnected("fc1", new TensorShape(inputs), fcNeurons, new RELU()));
-    //       model.addLayer(new FullyConnected("fc2", new TensorShape(outputs), outputs, new RELU()));
         model.addLayer(new SimpleOutput("Out", new TensorShape(fcNeurons), outputs, new MSE(), true));
+//        Model model = new Model(new InputLayer("In", new TensorShape(inputs), true));
+//        model.addLayer(new SimpleOutput("Out", new TensorShape(inputs), outputs, new MSE(), true));
         return model;
     }
 
